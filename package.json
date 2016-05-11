@@ -25,11 +25,11 @@
   },
   "license": "MIT",
   "main": "dist/superb.js",
-  "peerDependencies": {
-    "incremental-dom": "^0.4.1"
-  },
   "dependencies": {
     "supermodels.js": "0.1.1"
+  },
+  "peerDependencies": {
+    "incremental-dom": "^0.4.1"
   },
   "engines": {
     "node": ">=5.10"
