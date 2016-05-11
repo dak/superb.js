@@ -33,7 +33,6 @@ class Region {
         this.controllers = this.controllers || [];
         this.controllers.push(controller);
         this.el.appendChild(controller.el);
-        controller.render();
     }
 
     empty() {
@@ -84,7 +83,7 @@ class Controller {
         this.init(...arguments);
         Controller.injectCSS(this.css);
         this.setElement(this.el);
-        patch(this.el, this.template, this.model);
+        this.update();
         this.regions = new Regions(this.regions, this);
         this.onLoaded();
     }
@@ -96,8 +95,8 @@ class Controller {
 
         let links = document.getElementsByTagName('link');
 
-        for (let link of links) {
-            if (file === link.href) {
+        for (let i = 0; links[i]; i++) {
+            if (file === links[i].href) {
                 return;
             }
         }
@@ -112,8 +111,6 @@ class Controller {
     }
 
     setElement(el) {
-        this.undelegateEvents();
-
         if (typeof el === 'string') {
             if (this.parent) {
                 this.el = this.parent.querySelector(el);
@@ -141,20 +138,17 @@ class Controller {
             }
         }
 
-        this.delegateEvents();
-
         return this;
     }
 
-    render() {
-        this.onBeforeRender();
+    update() {
         patch(this.el, this.template, this.model);
-        this.onRender();
+        this.delegateEvents();
     }
 
     onLoaded() {}
-    onBeforeRender() {}
-    onRender() {}
+    onBeforeClose() {}
+    onClose() {}
 
     delegateEvents(events = this.events) {
         if (typeof events !== 'object') {
@@ -165,7 +159,7 @@ class Controller {
 
         for (let key in events) {
             if (!events.hasOwnProperty(key)) {
-               return this;
+               continue;
             }
 
             let method = events[key];
@@ -186,7 +180,7 @@ class Controller {
 
     undelegateEvents() {
         if (this.el instanceof Element) {
-            for (let item of this[DOM_EVENTS].length) {
+            for (let item of this[DOM_EVENTS]) {
                 item.el.removeEventListener(item.eventName, item.handler);
             }
 
@@ -205,7 +199,9 @@ class Controller {
         if (selector) {
             let nodes = this.el.querySelectorAll(selector);
 
-            for (let node of nodes) {
+            for (let i = 0, len = nodes.length; i < len; i++) {
+                let node = nodes[i];
+
                 node.addEventListener(eventName, listener);
                 this[DOM_EVENTS].push({el: node, eventName: eventName, listener: listener, selector: selector});
             }
@@ -213,6 +209,27 @@ class Controller {
             this.el.addEventListener(eventName, listener);
             this[DOM_EVENTS].push({el: this.el, eventName: eventName, listener: listener});
         }
+
+        return this;
+    }
+
+    detach() {
+        this.onBeforeClose();
+        this.onClose();
+
+        for (let region in this.regions) {
+            if (this.regions.hasOwnProperty(region)) {
+                this.regions[region].detach();
+            }
+        }
+
+        this.undelegateEvents();
+
+        if (this.el.parent) {
+            this.el.parent.el.removeChild(this.el);
+        }
+
+        dispose(this);
 
         return this;
     }

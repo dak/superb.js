@@ -9,9 +9,6 @@
     }
   ],
   "files": [
-    "gulp",
-    "superb.js",
-    "src",
     "dist"
   ],
   "scripts": {
