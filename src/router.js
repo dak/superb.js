@@ -5,12 +5,19 @@ let defaultRoute  = /.*/,
     splatParam    = /\*\w+/g,
     escapeRegExp  = /[\-{}\[\]+?.,\\\^$|#\s]/g;
 
+const LOAD_ROUTE = Symbol();
+
 class Route {
 
     constructor(path, options = {}, router) {
         this.path = path;
-        this.options = options;
         this.router = router;
+
+        if (typeof options === 'string') {
+            this.options = {view: options};
+        } else {
+            this.options = options;
+        }
 
         if (path === defaultRoute) {
             router.defaultRoute = this;
@@ -19,13 +26,24 @@ class Route {
         }
     }
 
-    load(state, args) {
+    load(cb) {
+        this.onload = cb;
+    }
+
+    [LOAD_ROUTE](state, args) {
+        let router = this.router;
+
+        if (this.onload) {
+            this.onload(state, args);
+            return;
+        }
+
         let page = this.options.view;
 
         System.import(`~/pages/${page}/${page}`).then((m) => {
-            let View = m.default;
+            let Controller = m.default;
 
-            this.regions.main.show(new View(args));
+            router.defaultRegion.attach(new Controller(args));
         });
     }
 
@@ -66,6 +84,8 @@ class Router {
         history.scrollRestoration = 'manual';
         window.addEventListener('popstate', this[POPSTATE_EVENT_LISTENER]);
 
+        this[ON_POPSTATE]({target: window});
+
         return this;
     }
 
@@ -95,15 +115,15 @@ class Router {
         let state = e.target.history.state;
         let path = e.target.location.pathname;
 
-        for (let route in this.routes) {
+        for (let route of this.routes) {
             if (route.path.test(path)) {
-                route.load(state);
+                route[LOAD_ROUTE](state);
                 return;
             }
         }
 
         if (this.defaultRoute instanceof Route) {
-            this.defaultRoute.load(state);
+            this.defaultRoute[LOAD_ROUTE](state);
         }
     }
 
