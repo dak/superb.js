@@ -142,7 +142,13 @@ class Controller {
     }
 
     update() {
-        patch(this.el, this.template, this.model);
+        let data = this.model;
+
+        if (typeof data === 'function') {
+            data = data();
+        }
+
+        patch(this.el, this.template, data);
         this.delegateEvents();
     }
 
