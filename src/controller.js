@@ -1,5 +1,13 @@
 import {patch} from 'incremental-dom';
 
+// Fix browsers that don't properly implement Element.matches (IE/Edge)
+if (!Element.prototype.matches) {
+    Element.prototype.matches =
+        Element.prototype.msMatchesSelector ||
+        Element.prototype.mozMatchesSelector ||
+        Element.prototype.webkitMatchesSelector;
+}
+
 const DELEGATE_EVENT_SPLITTER = /^(\S+)\s*(.*)$/;
 
 function dispose(obj) {
@@ -84,6 +92,7 @@ class Controller {
         Controller.injectCSS(this.css);
         this.setElement(this.el);
         this.update();
+        this.delegateEvents();
         this.regions = new Regions(this.regions, this);
         this.onLoaded();
     }
@@ -149,7 +158,6 @@ class Controller {
         }
 
         patch(this.el, this.template, data);
-        this.delegateEvents();
     }
 
     onLoaded() {}
@@ -187,7 +195,7 @@ class Controller {
     undelegateEvents() {
         if (this.el instanceof Element) {
             for (let item of this[DOM_EVENTS]) {
-                item.el.removeEventListener(item.eventName, item.handler);
+                this.el.removeEventListener(item.eventName, item.handler);
             }
 
             this[DOM_EVENTS].length = 0;
@@ -196,25 +204,24 @@ class Controller {
         return this;
     }
 
-    [DELEGATE](eventName, selector, listener) {
+    [DELEGATE](eventName, selector, handler) {
         if (typeof selector === 'function') {
             listener = selector;
             selector = null;
         }
 
+        let nodeHandler = handler;
+
         if (selector) {
-            let nodes = this.el.querySelectorAll(selector);
-
-            for (let i = 0, len = nodes.length; i < len; i++) {
-                let node = nodes[i];
-
-                node.addEventListener(eventName, listener);
-                this[DOM_EVENTS].push({el: node, eventName: eventName, listener: listener, selector: selector});
-            }
-        } else {
-            this.el.addEventListener(eventName, listener);
-            this[DOM_EVENTS].push({el: this.el, eventName: eventName, listener: listener});
+            nodeHandler = (e) => {
+                if (e.target && e.target.matches(selector)) {
+                    handler(e);
+                }
+            };
         }
+
+        this.el.addEventListener(eventName, nodeHandler);
+        this[DOM_EVENTS].push({eventName: eventName, handler: nodeHandler});
 
         return this;
     }
