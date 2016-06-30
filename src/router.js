@@ -33,24 +33,31 @@ class Route {
         this.onload = cb;
     }
 
-    [LOAD_ROUTE](state, args) {
-        let router = this.router;
+    [LOAD_ROUTE](state, params) {
+        const router = this.router;
 
         if (this.onload) {
-            this.onload(state, args).then(() => {
+            this.onload(state, params).then(() => {
                 this[RESTORE_WINDOW_POSITION]();
             });
+
             return;
         }
 
         let page = this.options.view;
 
-        System.import(`~/pages/${page}/${page}`).then((m) => {
-            let Controller = m.default;
+        if (page) {
+            const subpage = params.length > 0 ?
+                `${params.join('/')}/${params[params.length - 1]}` :
+                page;
 
-            router.defaultRegion.attach(new Controller(args));
-            this[RESTORE_WINDOW_POSITION]();
-        });
+            System.import(`~/pages/${page}/${subpage}`).then((m) => {
+                const Controller = m.default;
+
+                router.defaultRegion.attach(new Controller(params));
+                this[RESTORE_WINDOW_POSITION]();
+            });
+        }
     }
 
     [RESTORE_WINDOW_POSITION]() {
@@ -82,7 +89,7 @@ class Router {
 
     route(route, options = {}) {
         if (!(route instanceof RegExp)) {
-            options.view = route;
+            options.view = options.view || route;
             route = this[CONVERT_ROUTE](route);
         }
 
@@ -166,7 +173,9 @@ class Router {
 
         for (let route of this.routes) {
             if (route.path.test(path)) {
-                route[LOAD_ROUTE](state);
+                let params = route.path.exec(path).slice(1);
+
+                route[LOAD_ROUTE](state, params);
                 match = true;
                 break;
             }
