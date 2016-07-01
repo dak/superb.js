@@ -56,6 +56,14 @@ class Route {
 
                 router.defaultRegion.attach(new Controller(params));
                 this[RESTORE_WINDOW_POSITION]();
+                router.loadFailure = false;
+            }).catch((e) => {
+                if (!router.loadFailure && router.defaultRoute instanceof Route) {
+                    router.loadFailure = true;
+                    router.defaultRoute[LOAD_ROUTE](state);
+                } else {
+                    throw e;
+                }
             });
         }
     }
@@ -182,7 +190,7 @@ class Router {
         }
 
         if (!match && this.defaultRoute instanceof Route) {
-            this.defaultRoute[LOAD_ROUTE](state);
+            this.defaultRoute[LOAD_ROUTE](state, params);
         }
     }
 
