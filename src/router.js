@@ -47,7 +47,7 @@ class Route {
         let page = this.options.view;
 
         if (page) {
-            const subpage = params.length > 0 ?
+            const subpage = (params instanceof Array && params.length) > 0 ?
                 `${params.join('/')}/${params[params.length - 1]}` :
                 page;
 
