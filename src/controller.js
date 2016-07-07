@@ -230,12 +230,12 @@ class Controller {
                 } else {
                     const els = this.el.querySelectorAll(selector);
 
-                    els.forEach((el) => {
+                    for (const el of els) {
                         if (el.contains(e.target)) {
                             e.delegateTarget = el;
                             handler(e);
                         }
-                    });
+                    }
                 }
             };
         } else {
