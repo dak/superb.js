@@ -96,6 +96,10 @@ class Router {
     init() {}
 
     route(route, options = {}) {
+        if (typeof options === 'string') {
+            options = {view: options};
+        }
+
         if (!(route instanceof RegExp)) {
             options.view = options.view || route;
             route = this[CONVERT_ROUTE](route);
