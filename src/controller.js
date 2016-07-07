@@ -214,10 +214,38 @@ class Controller {
 
         if (selector) {
             nodeHandler = (e) => {
-                if (e.target && e.target.matches(selector)) {
+                if (!e.target || e.propagationStopped) {
+                    return;
+                }
+
+                const stopPropagation = e.constructor.prototype.stopPropagation.bind(e);
+
+                e.stopPropagation = () => {
+                    e.propagationStopped = true;
+                    stopPropagation();
+                };
+
+                if (e.target.matches(selector)) {
                     handler(e);
+                } else {
+                    const els = this.el.querySelectorAll(selector);
+
+                    els.forEach((el) => {
+                        if (el.contains(e.target)) {
+                            e.delegateTarget = el;
+                            handler(e);
+                        }
+                    });
                 }
             };
+        } else {
+            nodeHandler = (e) => {
+                if (e.propagationStopped) {
+                    return;
+                }
+
+                handler(e);
+            }
         }
 
         this.el.addEventListener(eventName, nodeHandler);
