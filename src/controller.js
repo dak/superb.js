@@ -158,9 +158,11 @@ class Controller {
         }
 
         patch(this.el, this.template, data);
+        this.onUpdate();
     }
 
     onLoaded() {}
+    onUpdate() {}
     onBeforeClose() {}
     onClose() {}
 
