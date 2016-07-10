@@ -149,21 +149,17 @@ class Router {
     }
 
     navigate(path, state = {}) {
-        if (!Router[PATH_CHANGED](path)) {
-            if (!path.split('#')[1]) {
-                location.hash = '';
-                window.scrollTo(0, 0);
-            }
-
-            return;
-        }
-
         Router[SAVE_SCROLL_STATE]();
 
         state.x = state.x || 0;
         state.y = state.y || 0;
 
-        history.pushState(state, '', path);
+        const currentPath = `${location.pathname}${location.search}${location.hash}`;
+
+        if (path !== location.hash && path !== currentPath) {
+            history.pushState(state, '', path);
+        }
+
         let event = new PopStateEvent('popstate', {state: state});
 
         window.dispatchEvent(event);
@@ -184,12 +180,14 @@ class Router {
         };
 
         if (!Router[PATH_CHANGED](previousPath)) {
-            if (previousPath.hash !== location.hash) {
+            if (location.hash) {
                 const el = document.getElementById(location.hash.split('#')[1]);
 
                 if (el instanceof Element) {
                     window.scrollTo(0, el.offsetTop);
                 }
+            } else {
+                window.scrollTo(0, 0);
             }
 
             return;
