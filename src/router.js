@@ -39,11 +39,11 @@ class Route {
         this.onload = cb;
     }
 
-    [LOAD_ROUTE](state, params) {
+    [LOAD_ROUTE](params) {
         const router = this.router;
 
         if (this.onload) {
-            this.onload(state, params).then(() => {
+            this.onload(params).then(() => {
                 Route[RESTORE_WINDOW_POSITION]();
             });
 
@@ -66,7 +66,7 @@ class Route {
             }).catch((e) => {
                 if (!router.loadFailure && router.defaultRoute instanceof Route) {
                     router.loadFailure = true;
-                    router.defaultRoute[LOAD_ROUTE](state);
+                    router.defaultRoute[LOAD_ROUTE]();
                 } else {
                     throw e;
                 }
@@ -75,7 +75,7 @@ class Route {
     }
 
     static [RESTORE_WINDOW_POSITION]() {
-        if (typeof history.state === 'object' && history.state !== null) {
+        if (history.state !== null && typeof history.state === 'object') {
             window.scrollTo(history.state.x || 0, history.state.y || 0);
         } else {
             window.scrollTo(0, 0);
@@ -94,10 +94,13 @@ class Route {
 }
 
 const ON_POPSTATE = Symbol();
+const PATH_CHANGED = Symbol();
 const POPSTATE_EVENT_LISTENER = Symbol();
 const SCROLL_EVENT_LISTENER = Symbol();
-const SAVE_SCROLL_STATE = Symbol();
 const SETUP_HISTORY_STATE = Symbol();
+const SAVE_SCROLL_STATE = Symbol();
+const PREVIOUS_PATH = Symbol();
+const CURRENT_PATH = Symbol();
 
 class Router {
 
@@ -126,7 +129,7 @@ class Router {
 
     start() {
         this[POPSTATE_EVENT_LISTENER] = this[ON_POPSTATE].bind(this);
-        this[SCROLL_EVENT_LISTENER] = debounce(this[SAVE_SCROLL_STATE].bind(this), 100);
+        this[SCROLL_EVENT_LISTENER] = debounce(Router[SAVE_SCROLL_STATE], 100);
 
         history.scrollRestoration = 'manual';
         window.addEventListener('popstate', this[POPSTATE_EVENT_LISTENER]);
@@ -146,13 +149,16 @@ class Router {
     }
 
     navigate(path, state = {}) {
-        if (location.pathname === path) {
-            window.scrollTo(0, 0);
+        if (!Router[PATH_CHANGED](path)) {
+            if (!path.split('#')[1]) {
+                location.hash = '';
+                window.scrollTo(0, 0);
+            }
 
-            return this;
+            return;
         }
 
-        this[SAVE_SCROLL_STATE]();
+        Router[SAVE_SCROLL_STATE]();
 
         state.x = state.x || 0;
         state.y = state.y || 0;
@@ -167,43 +173,61 @@ class Router {
 
     // Internal Methods
 
-    [SETUP_HISTORY_STATE]() {
-        if (typeof history.state !== 'object') {
-            history.replaceState({}, '', location.pathname);
+    [ON_POPSTATE](e) {
+        let pathname = e.target.location.pathname;
+        const previousPath = Object.assign({}, this[PREVIOUS_PATH]);
+
+        this[PREVIOUS_PATH] = {
+            pathname: location.pathname,
+            search: location.search
+        };
+
+        if (!Router[PATH_CHANGED](previousPath)) {
+            return;
+        }
+
+        for (let route of this.routes) {
+            if (route.path.test(pathname)) {
+                let params = route.path.exec(pathname).slice(1);
+
+                route[LOAD_ROUTE](params);
+                return;
+            }
+        }
+
+        if (this.defaultRoute instanceof Route) {
+            this.defaultRoute[LOAD_ROUTE](params);
         }
     }
 
-    [SAVE_SCROLL_STATE]() {
-        this[SETUP_HISTORY_STATE]();
+    static [PATH_CHANGED](loc) {
+        if (typeof loc === 'string') {
+            return `${location.pathname}${location.search}` !== loc;
+        }
+
+        return location.pathname !== loc.pathname ||
+            location.search  !== loc.search;
+    }
+
+    static [SETUP_HISTORY_STATE]() {
+        if (history.state !== null && typeof history.state !== 'object') {
+            history.replaceState({}, '', Router[CURRENT_PATH]());
+        }
+    }
+
+    static [SAVE_SCROLL_STATE]() {
+        Router[SETUP_HISTORY_STATE]();
 
         let currentState = Object.assign({}, history.state);
 
         currentState.x = window.scrollX || window.pageXOffset;
         currentState.y = window.scrollY || window.pageYOffset;
 
-        history.replaceState(currentState, '', location.pathname);
+        history.replaceState(currentState, '', Router[CURRENT_PATH]());
     }
 
-    [ON_POPSTATE](e) {
-        let state = e.target.history.state;
-        let path = e.target.location.pathname;
-        let match = false;
-
-        this[SETUP_HISTORY_STATE]();
-
-        for (let route of this.routes) {
-            if (route.path.test(path)) {
-                let params = route.path.exec(path).slice(1);
-
-                route[LOAD_ROUTE](state, params);
-                match = true;
-                break;
-            }
-        }
-
-        if (!match && this.defaultRoute instanceof Route) {
-            this.defaultRoute[LOAD_ROUTE](state, params);
-        }
+    static [CURRENT_PATH]() {
+        return `${location.pathname}${location.search}${location.hash}`;
     }
 
 }
