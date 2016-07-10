@@ -179,10 +179,19 @@ class Router {
 
         this[PREVIOUS_PATH] = {
             pathname: location.pathname,
-            search: location.search
+            search: location.search,
+            hash: location.hash
         };
 
         if (!Router[PATH_CHANGED](previousPath)) {
+            if (previousPath.hash !== location.hash) {
+                const el = document.getElementById(location.hash.split('#')[1]);
+
+                if (el instanceof Element) {
+                    window.scrollTo(0, el.offsetTop);
+                }
+            }
+
             return;
         }
 
