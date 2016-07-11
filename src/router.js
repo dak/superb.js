@@ -150,16 +150,30 @@ class Router {
     }
 
     navigate(path, state = {}) {
-        Router[SAVE_SCROLL_STATE]();
+        if (typeof path !== 'string') {
+            throw new Error('The first argument passed to navigate must be a string.');
+            return;
+        }
 
-        state.x = state.x || 0;
-        state.y = state.y || 0;
+        if (!Router[PATH_CHANGED](path) && !path.split('#')[1]) {
+            let newState = Object.assign({}, history.state, {x: 0, y: 0});
+
+            history.replaceState(newState, '', path);
+            window.scrollTo(0, 0);
+            return;
+
+        }
+
+        Router[SAVE_SCROLL_STATE]();
 
         const currentPath = `${location.pathname}${location.search}${location.hash}`;
 
         if (path !== location.hash && path !== currentPath) {
             history.pushState(state, '', path);
         }
+
+        state.x = state.x || 0;
+        state.y = state.y || 0;
 
         let event = new PopStateEvent('popstate', {state: state});
 
@@ -213,8 +227,8 @@ class Router {
                 if (el instanceof Element) {
                     window.scrollTo(0, el.offsetTop);
                 }
-            } else if (!history.state.noScroll) {
-                window.scrollTo(0, 0);
+            } else {
+                window.scrollTo(history.state.x || 0, history.state.y || 0);
             }
 
             return;
