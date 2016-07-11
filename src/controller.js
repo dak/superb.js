@@ -227,6 +227,7 @@ class Controller {
                 };
 
                 if (e.target.matches(selector)) {
+                    e.delegateTarget = e.target;
                     handler(e);
                 } else {
                     const els = this.el.querySelectorAll(selector);
