@@ -93,6 +93,7 @@ class Route {
 
 }
 
+const MODIFY_STATE = Symbol();
 const ON_POPSTATE = Symbol();
 const PATH_CHANGED = Symbol();
 const POPSTATE_EVENT_LISTENER = Symbol();
@@ -167,7 +168,33 @@ class Router {
         return this;
     }
 
+    setState(state) {
+        this[MODIFY_STATE](state);
+    }
+
+    pushState(state) {
+        this[MODIFY_STATE](state, true);
+    }
+
     // Internal Methods
+
+    [MODIFY_STATE](state, push) {
+        Router[SETUP_HISTORY_STATE]();
+
+        if (state === null || typeof state !== 'object') {
+            throw new Error('State value must be an object.');
+            return;
+        }
+
+        let newState = Object.assign({}, history.state, state);
+
+        if (push) {
+            history.pushState(newState, '', Router[CURRENT_PATH]());
+        } else {
+            history.replaceState(newState, '', Router[CURRENT_PATH]());
+        }
+
+    }
 
     [ON_POPSTATE](e) {
         let pathname = e.target.location.pathname;
@@ -186,7 +213,7 @@ class Router {
                 if (el instanceof Element) {
                     window.scrollTo(0, el.offsetTop);
                 }
-            } else {
+            } else if (!history.state.noScroll) {
                 window.scrollTo(0, 0);
             }
 
