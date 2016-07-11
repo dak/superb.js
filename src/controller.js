@@ -163,7 +163,6 @@ class Controller {
 
     onLoaded() {}
     onUpdate() {}
-    onBeforeClose() {}
     onClose() {}
 
     delegateEvents(events = this.events) {
@@ -257,7 +256,6 @@ class Controller {
     }
 
     detach() {
-        this.onBeforeClose();
         this.onClose();
 
         for (let region in this.regions) {
