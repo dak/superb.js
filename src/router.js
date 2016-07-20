@@ -149,7 +149,7 @@ class Router {
         return this;
     }
 
-    navigate(path, state = {}) {
+    navigate(path, state = {}, options = {}) {
         if (typeof path !== 'string') {
             throw new Error('The first argument passed to navigate must be a string.');
             return;
@@ -177,7 +177,9 @@ class Router {
 
         let event = new PopStateEvent('popstate', {state: state});
 
-        window.dispatchEvent(event);
+        if (options.ignore !== true) {
+            window.dispatchEvent(event);
+        }
 
         return this;
     }
