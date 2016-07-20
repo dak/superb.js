@@ -105,7 +105,7 @@ class Controller {
         let links = document.getElementsByTagName('link');
 
         for (let i = 0; links[i]; i++) {
-            if (file === links[i].href) {
+            if (file === links[i].getAttribute('href')) {
                 return;
             }
         }
