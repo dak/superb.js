@@ -222,7 +222,7 @@ class Router {
             hash: location.hash
         };
 
-        if (!Router[PATH_CHANGED](previousPath)) {
+        if (!Router[PATH_CHANGED](previousPath) && !Router[PATH_CHANGED](history.state.path)) {
             if (location.hash) {
                 const el = document.getElementById(location.hash.split('#')[1]);
 
