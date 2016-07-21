@@ -222,7 +222,13 @@ class Router {
             hash: location.hash
         };
 
-        if (!Router[PATH_CHANGED](previousPath) || !Router[PATH_CHANGED](history.state.path)) {
+        let effectivePath = null;
+
+        if (history.state !== null && typeof history.state === 'object') {
+            effectivePath = history.state.path;
+        }
+
+        if (!Router[PATH_CHANGED](previousPath) || !Router[PATH_CHANGED](effectivePath)) {
             if (location.hash) {
                 const el = document.getElementById(location.hash.split('#')[1]);
 
@@ -253,7 +259,7 @@ class Router {
     static [PATH_CHANGED](loc) {
         if (typeof loc === 'string') {
             return `${location.pathname}${location.search}` !== loc;
-        } else if (typeof loc !== null && typeof loc === 'object') {
+        } else if (loc !== null && typeof loc === 'object') {
             return location.pathname !== loc.pathname ||
                 location.search  !== loc.search;
         }
