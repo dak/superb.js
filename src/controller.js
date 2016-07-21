@@ -233,7 +233,7 @@ class Controller {
                     const els = this.el.querySelectorAll(selector);
 
                     for (const el of els) {
-                        if (el === e.target || el.contains(e.target)) {
+                        if (el.contains(e.target)) {
                             e.delegateTarget = el;
                             handler(e);
                         }
