@@ -253,10 +253,12 @@ class Router {
     static [PATH_CHANGED](loc) {
         if (typeof loc === 'string') {
             return `${location.pathname}${location.search}` !== loc;
+        } else if (typeof loc !== null && typeof loc === 'object') {
+            return location.pathname !== loc.pathname ||
+                location.search  !== loc.search;
         }
 
-        return location.pathname !== loc.pathname ||
-            location.search  !== loc.search;
+        return true;
     }
 
     static [SETUP_HISTORY_STATE]() {
