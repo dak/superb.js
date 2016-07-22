@@ -266,7 +266,7 @@ class Router {
         }
 
         if (isObject(loc)) {
-            if (isObject(history.state)) {
+            if (isObject(history.state) && history.state.path) {
                 return (location.pathname !== loc.pathname ||
                     location.search !== loc.search) &&
                     history.state.path !== loc.appPath;
