@@ -11,6 +11,10 @@ const CONVERT_ROUTE = Symbol();
 const LOAD_ROUTE = Symbol();
 const RESTORE_WINDOW_POSITION = Symbol();
 
+function isObject(obj) {
+    return obj !== null && typeof obj === 'object';
+}
+
 class Route {
 
     constructor(path, options = {}, router) {
@@ -75,7 +79,7 @@ class Route {
     }
 
     static [RESTORE_WINDOW_POSITION]() {
-        if (history.state !== null && typeof history.state === 'object') {
+        if (isObject(history.state)) {
             window.scrollTo(history.state.x || 0, history.state.y || 0);
         } else {
             window.scrollTo(0, 0);
@@ -94,6 +98,7 @@ class Route {
 }
 
 const MODIFY_STATE = Symbol();
+const STORE_PREVIOUS_PATH = Symbol();
 const ON_POPSTATE = Symbol();
 const PATH_CHANGED = Symbol();
 const POPSTATE_EVENT_LISTENER = Symbol();
@@ -161,7 +166,6 @@ class Router {
             history.replaceState(newState, '', path);
             window.scrollTo(0, 0);
             return;
-
         }
 
         Router[SAVE_SCROLL_STATE]();
@@ -184,7 +188,7 @@ class Router {
         return this;
     }
 
-    setState(state) {
+    replaceState(state) {
         this[MODIFY_STATE](state);
     }
 
@@ -197,7 +201,7 @@ class Router {
     [MODIFY_STATE](state, push) {
         Router[SETUP_HISTORY_STATE]();
 
-        if (state === null || typeof state !== 'object') {
+        if (!isObject(state)) {
             throw new Error('State value must be an object.');
             return;
         }
@@ -210,25 +214,25 @@ class Router {
             history.replaceState(newState, '', Router[CURRENT_PATH]());
         }
 
+        this[STORE_PREVIOUS_PATH]();
+    }
+
+    [STORE_PREVIOUS_PATH]() {
+        this[PREVIOUS_PATH] = {
+            pathname: location.pathname,
+            search: location.search,
+            hash: location.hash,
+            appPath: isObject(history.state) ? history.state.path : null
+        };
     }
 
     [ON_POPSTATE](e) {
         let pathname = e.target.location.pathname;
         const previousPath = Object.assign({}, this[PREVIOUS_PATH]);
 
-        this[PREVIOUS_PATH] = {
-            pathname: location.pathname,
-            search: location.search,
-            hash: location.hash
-        };
+        this[STORE_PREVIOUS_PATH]();
 
-        let effectivePath = null;
-
-        if (history.state !== null && typeof history.state === 'object') {
-            effectivePath = history.state.path;
-        }
-
-        if (!Router[PATH_CHANGED](previousPath) || !Router[PATH_CHANGED](effectivePath)) {
+        if (!Router[PATH_CHANGED](previousPath)) {
             if (location.hash) {
                 const el = document.getElementById(location.hash.split('#')[1]);
 
@@ -252,23 +256,31 @@ class Router {
         }
 
         if (this.defaultRoute instanceof Route) {
-            this.defaultRoute[LOAD_ROUTE](params);
+            this.defaultRoute[LOAD_ROUTE]();
         }
     }
 
     static [PATH_CHANGED](loc) {
         if (typeof loc === 'string') {
             return `${location.pathname}${location.search}` !== loc;
-        } else if (loc !== null && typeof loc === 'object') {
-            return location.pathname !== loc.pathname ||
-                location.search  !== loc.search;
+        }
+
+        if (isObject(loc)) {
+            if (isObject(history.state)) {
+                return (location.pathname !== loc.pathname ||
+                    location.search !== loc.search) &&
+                    history.state.path !== loc.appPath;
+            } else {
+                return location.pathname !== loc.pathname ||
+                    location.search !== loc.search;
+            }
         }
 
         return true;
     }
 
     static [SETUP_HISTORY_STATE]() {
-        if (history.state !== null && typeof history.state !== 'object') {
+        if (!isObject(history.state)) {
             history.replaceState({}, '', Router[CURRENT_PATH]());
         }
     }
