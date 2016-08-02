@@ -41,6 +41,7 @@ class Region {
         this.controllers = this.controllers || [];
         this.controllers.push(controller);
         this.el.appendChild(controller.el);
+        controller.onAttached();
     }
 
     empty() {
@@ -161,6 +162,7 @@ class Controller {
         this.onUpdate();
     }
 
+    onAttached() {}
     onLoaded() {}
     onUpdate() {}
     onClose() {}
