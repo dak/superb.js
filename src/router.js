@@ -9,6 +9,7 @@ let defaultRoute  = /.*/,
 
 const CONVERT_ROUTE = Symbol();
 const LOAD_ROUTE = Symbol();
+const ROUTE_LOADED = Symbol();
 const RESTORE_WINDOW_POSITION = Symbol();
 
 function isObject(obj) {
@@ -49,6 +50,7 @@ class Route {
         if (this.onload) {
             this.onload(params).then(() => {
                 Route[RESTORE_WINDOW_POSITION]();
+                this[ROUTE_LOADED](params);
             });
 
             return;
@@ -66,16 +68,34 @@ class Route {
 
                 router.defaultRegion.attach(new Controller(params));
                 Route[RESTORE_WINDOW_POSITION]();
+                this[ROUTE_LOADED](params, page, subpage);
                 router.loadFailure = false;
             }).catch((e) => {
                 if (!router.loadFailure && router.defaultRoute instanceof Route) {
                     router.loadFailure = true;
                     router.defaultRoute[LOAD_ROUTE]();
+                    this[ROUTE_LOADED]('404');
                 } else {
                     throw e;
                 }
             });
         }
+    }
+
+    [ROUTE_LOADED](params, page, subpage) {
+        if (typeof CustomEvent !== 'function') {
+            return;
+        }
+
+        var event = new CustomEvent('route:loaded', {
+            detail: {
+                params: params,
+                page: page,
+                subpage: subpage
+            }
+        });
+
+        window.dispatchEvent(event);
     }
 
     static [RESTORE_WINDOW_POSITION]() {
