@@ -112,7 +112,7 @@ class Route {
                      .replace(namedParam, (match, optional) => optional ? match : '([^/?]+)')
                      .replace(splatParam, '([^?]*?)');
 
-        return new RegExp(`^\/${route}$`);
+        return new RegExp(`^${route}$`);
     }
 
 }
@@ -247,7 +247,7 @@ class Router {
     }
 
     [ON_POPSTATE](e) {
-        let pathname = e.target.location.pathname;
+        const pathname = e.target.location.pathname.replace(/^\//, '');
         const previousPath = Object.assign({}, this[PREVIOUS_PATH]);
 
         this[STORE_PREVIOUS_PATH]();
@@ -266,9 +266,9 @@ class Router {
             return;
         }
 
-        for (let route of this.routes) {
+        for (const route of this.routes) {
             if (route.path.test(pathname)) {
-                let params = route.path.exec(pathname).slice(1);
+                const params = route.path.exec(pathname).slice(1);
 
                 route[LOAD_ROUTE](params);
                 return;
