@@ -1,11 +1,12 @@
 import {debounce} from './utils';
 
-let defaultRoute  = /.*/,
-    rootRoute     = /^\/$/,
-    optionalParam = /\((.*?)\)/g,
-    namedParam    = /(\(\?)?:\w+/g,
-    splatParam    = /\*\w+/g,
-    escapeRegExp  = /[\-{}\[\]+?.,\\\^$|#\s]/g;
+const defaultRoute = /.*/;
+const leadingSlash = /^\//;
+const rootRoute = /^\/$/;
+const optionalParam = /\((.*?)\)/g;
+const namedParam = /(\(\?)?:\w+/g;
+const splatParam = /\*\w+/g;
+const escapeRegExp = /[\-{}\[\]+?.,\\\^$|#\s]/g;
 
 const CONVERT_ROUTE = Symbol();
 const LOAD_ROUTE = Symbol();
@@ -247,7 +248,7 @@ class Router {
     }
 
     [ON_POPSTATE](e) {
-        const pathname = e.target.location.pathname.replace(/^\//, '');
+        let pathname = e.target.location.pathname;
         const previousPath = Object.assign({}, this[PREVIOUS_PATH]);
 
         this[STORE_PREVIOUS_PATH]();
@@ -264,6 +265,10 @@ class Router {
             }
 
             return;
+        }
+
+        if (pathname.length > 1) {
+            pathname = pathname.replace(leadingSlash, '');
         }
 
         for (const route of this.routes) {
