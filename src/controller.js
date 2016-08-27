@@ -91,6 +91,14 @@ class Controller {
         this.view = options.view || {tag: 'div'};
         this.init(...arguments);
         Controller.injectCSS(this.css);
+
+        const description = this.description || this.constructor.description;
+        const meta = document.querySelector('head > meta[name="description"]');
+
+        if (description && meta) {
+            meta.content = description;
+        }
+
         this.setElement(this.el);
         this.update();
         this.delegateEvents();
