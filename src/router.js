@@ -200,10 +200,17 @@ class Router {
         state.x = state.x || 0;
         state.y = state.y || 0;
 
-        let event = new PopStateEvent('popstate', {state: state});
+        if (typeof PopStateEvent === 'function') {
+            let event = new PopStateEvent('popstate', {state: state});
 
-        if (options.ignore !== true) {
-            window.dispatchEvent(event);
+            if (options.ignore !== true) {
+                window.dispatchEvent(event);
+            }
+        } else {
+            // IE11
+            this[ON_POPSTATE]({
+                target: window
+            });
         }
 
         return this;
