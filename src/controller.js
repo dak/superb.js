@@ -8,6 +8,8 @@ if (!Element.prototype.matches) {
         Element.prototype.webkitMatchesSelector;
 }
 
+const SETUP_ELEMENT = Symbol();
+
 const DELEGATE_EVENT_SPLITTER = /^(\S+)\s*(.*)$/;
 
 function dispose(obj) {
@@ -41,11 +43,17 @@ class Region {
         this.controllers = this.controllers || [];
         this.controllers.push(controller);
         this.el.appendChild(controller.el);
+
+        if (!controller.el instanceof Element) {
+            controller.el = this.el;
+            controller[SETUP_ELEMENT]();
+        }
+
         controller.onAttached();
     }
 
     empty() {
-        for (let controller of this.controllers) {
+        for (const controller of this.controllers) {
             controller.detach();
         }
 
@@ -68,7 +76,7 @@ class Region {
 class Regions {
 
     constructor(regions = {}, context) {
-        for (let region in regions) {
+        for (const region in regions) {
             if (regions.hasOwnProperty(region)) {
                 this[region] = new Region(regions[region], context);
             }
@@ -111,7 +119,7 @@ class Controller {
             return;
         }
 
-        let links = document.getElementsByTagName('link');
+        const links = document.getElementsByTagName('link');
 
         for (let i = 0; links[i]; i++) {
             if (file === links[i].getAttribute('href')) {
@@ -119,7 +127,7 @@ class Controller {
             }
         }
 
-        let link = document.createElement('link');
+        const link = document.createElement('link');
 
         link.href = file;
         link.type = 'text/css';
@@ -141,22 +149,28 @@ class Controller {
             this.el = el;
         }
 
+        if (this.el instanceof Element) {
+            this[SETUP_ELEMENT]();
+        }
+
+        return this;
+    }
+
+    [SETUP_ELEMENT]() {
         if (typeof this.view.id === 'string') {
             this.el.id = this.view.id;
         }
 
-        let classes = this.view.classes || [];
-        let attributes = this.view.attributes;
+        const classes = this.view.classes || [];
+        const attributes = this.view.attributes;
 
         this.el.classList.add(...classes);
 
-        for (let attribute in attributes) {
+        for (const attribute in attributes) {
             if (attributes.hasOwnProperty(attribute)) {
                 this.el.setAttribute(attribute, attributes[attribute]);
             }
         }
-
-        return this;
     }
 
     update() {
@@ -184,7 +198,7 @@ class Controller {
 
         for (let key in events) {
             if (!events.hasOwnProperty(key)) {
-               continue;
+                continue;
             }
 
             let method = events[key];
@@ -261,7 +275,10 @@ class Controller {
         }
 
         this.el.addEventListener(eventName, nodeHandler);
-        this[DOM_EVENTS].push({eventName: eventName, handler: nodeHandler});
+        this[DOM_EVENTS].push({
+            eventName: eventName,
+            handler: nodeHandler
+        });
 
         return this;
     }
