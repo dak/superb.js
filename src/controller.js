@@ -44,9 +44,10 @@ class Region {
         this.controllers.push(controller);
         this.el.appendChild(controller.el);
 
-        if (!controller.el instanceof Element) {
+        if (controller.el instanceof DocumentFragment) {
             controller.el = this.el;
             controller[SETUP_ELEMENT]();
+            controller.delegateEvents();
         }
 
         controller.onAttached();
@@ -109,6 +110,11 @@ class Controller {
 
         this.setElement(this.el);
         this.update();
+
+        if (this.el instanceof Element) {
+            this.delegateEvents();
+        }
+
         this.delegateEvents();
         this.regions = new Regions(this.regions, this);
         this.onLoaded();
