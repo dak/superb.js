@@ -115,7 +115,6 @@ class Controller {
             this.delegateEvents();
         }
 
-        this.delegateEvents();
         this.regions = new Regions(this.regions, this);
         this.onLoaded();
     }
