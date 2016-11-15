@@ -169,7 +169,9 @@ class Controller {
         const classes = this.view.classes || [];
         const attributes = this.view.attributes;
 
-        this.el.classList.add(...classes);
+        if (classes.length) {
+            this.el.classList.add(...classes);
+        }
 
         for (const attribute in attributes) {
             if (attributes.hasOwnProperty(attribute)) {
