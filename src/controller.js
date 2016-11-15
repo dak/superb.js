@@ -169,9 +169,14 @@ class Controller {
         const classes = this.view.classes || [];
         const attributes = this.view.attributes;
 
-        if (classes.length) {
-            this.el.classList.add(...classes);
-        }
+        // HACK: IE11 cannot accept multiple arguments to classList.add
+        const l = classes.length;
+        if (l) {
+            for (let i = 0; i < l; i++) {
+                this.el.classList.add(classes[i]);
+            }
+        }
+        // this.el.classList.add(...classes);
 
         for (const attribute in attributes) {
             if (attributes.hasOwnProperty(attribute)) {
