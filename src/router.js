@@ -72,7 +72,9 @@ class Route {
                 this[ROUTE_LOADED](params, page, subpage);
                 router.loadFailure = false;
             }).catch((e) => {
-                if (!router.loadFailure && router.defaultRoute instanceof Route) {
+                if (!router.loadFailure && router.defaultRoute instanceof Route &&
+                    e.toString().match(/^Error: \(SystemJS\) XHR error \(404 Not Found\)/)) {
+
                     router.loadFailure = true;
                     router.defaultRoute[LOAD_ROUTE]();
                     this[ROUTE_LOADED]('404');
