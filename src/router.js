@@ -193,10 +193,11 @@ class Router {
 
         Router[SAVE_SCROLL_STATE]();
 
-        const currentPath = `${location.pathname}${location.search}${location.hash}`;
+        const pathname = this.pathname();
+        const currentPath = `${pathname}${location.search}${location.hash}`;
 
         if (path !== location.hash && path !== currentPath) {
-            history.pushState(state, '', path);
+            history.pushState(state, '', `$${pathname}{path}`);
         }
 
         state.x = state.x || 0;
@@ -224,6 +225,14 @@ class Router {
 
     pushState(state) {
         this[MODIFY_STATE](state, true);
+    }
+
+    normalizePath(path) {
+        return path.replace(this.base, '/');
+    }
+
+    pathname() {
+        return this.normalizePath(location.pathname);
     }
 
     // Internal Methods
@@ -257,7 +266,7 @@ class Router {
     }
 
     [ON_POPSTATE](e) {
-        let pathname = e.target.location.pathname;
+        let pathname = this.pathname();
         const previousPath = Object.assign({}, this[PREVIOUS_PATH]);
 
         this[STORE_PREVIOUS_PATH]();
