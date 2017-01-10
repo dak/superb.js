@@ -197,7 +197,7 @@ class Router {
         const currentPath = `${pathname}${location.search}${location.hash}`;
 
         if (path !== location.hash && path !== currentPath) {
-            history.pushState(state, '', `$${pathname}{path}`);
+            history.pushState(state, '', `${pathname}${path}`);
         }
 
         state.x = state.x || 0;
