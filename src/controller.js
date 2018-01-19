@@ -1,4 +1,5 @@
 import {patch} from 'incremental-dom';
+import {injectCSS} from './utils';
 
 // Fix browsers that don't properly implement Element.matches (IE/Edge)
 if (!Element.prototype.matches) {
@@ -99,7 +100,7 @@ class Controller {
         this.model = options.model;
         this.view = options.view || {tag: 'div'};
         this.init(...arguments);
-        Controller.injectCSS(this.css);
+        injectCSS(this.css);
 
         const description = this.description || this.constructor.description;
         const meta = document.querySelector('head > meta[name="description"]');
@@ -117,28 +118,6 @@ class Controller {
 
         this.regions = new Regions(this.regions, this);
         this.onLoaded();
-    }
-
-    static injectCSS(file) {
-        if (typeof file !== 'string') {
-            return;
-        }
-
-        const links = document.getElementsByTagName('link');
-
-        for (let i = 0; links[i]; i++) {
-            if (file === links[i].getAttribute('href')) {
-                return;
-            }
-        }
-
-        const link = document.createElement('link');
-
-        link.href = file;
-        link.type = 'text/css';
-        link.rel = 'stylesheet';
-
-        document.getElementsByTagName('head')[0].appendChild(link);
     }
 
     setElement(el) {
